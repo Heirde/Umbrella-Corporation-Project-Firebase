@@ -31,6 +31,7 @@ async function loadUser(user) {
         localStorage.setItem("lastName", lastName);
         localStorage.setItem("role", role);
         localStorage.setItem("clearance", clearance);
+        localStorage.setItem("uid", user.uid);
 
         avatar.textContent = (firstName[0] + (lastName[0] || "")).toUpperCase();
         nameEl.textContent = firstName + " " + lastName;
@@ -53,17 +54,24 @@ async function loadUser(user) {
         nameEl.textContent = "Guest";
         loggedInSection.style.display = "none";
         loggedOutSection.style.display = "block";
+
+        const bowLink = document.getElementById("bowLink");
+        const adminLink = document.getElementById("adminLink");
+        if (bowLink) bowLink.style.display = "none";
+        if (adminLink) adminLink.style.display = "none";
     }
 }
 
 onAuthStateChanged(auth, loadUser);
 
+// Dropdown toggle
 document.querySelector(".profile-btn").addEventListener("click", function(e) {
     e.stopPropagation();
     document.getElementById("profileDropdown").classList.toggle("open");
     this.classList.toggle("active");
 });
 
+// Close when clicking outside
 document.addEventListener("click", function(e) {
     if (!e.target.closest(".profile-wrapper")) {
         document.getElementById("profileDropdown").classList.remove("open");
@@ -71,6 +79,7 @@ document.addEventListener("click", function(e) {
     }
 });
 
+// Sign in
 document.getElementById("dropdownLoginBtn").addEventListener("click", async function() {
     const email = document.getElementById("dropdownEmail").value.trim();
     const pass = document.getElementById("dropdownPassword").value;
@@ -81,17 +90,34 @@ document.getElementById("dropdownLoginBtn").addEventListener("click", async func
         await signInWithEmailAndPassword(auth, email, pass);
         document.getElementById("profileDropdown").classList.remove("open");
     } catch (err) {
-        alert(err.message);
+        if (err.code === "auth/user-not-found") {
+            alert("Account not found");
+        } else if (err.code === "auth/wrong-password") {
+            alert("Incorrect password");
+        } else if (err.code === "auth/invalid-email") {
+            alert("Invalid email address");
+        } else {
+            alert(err.message);
+        }
     }
 });
 
+// Sign up
 document.getElementById("dropdownSignUpBtn").addEventListener("click", async function() {
     const firstName = document.getElementById("signUpFirstName").value.trim();
     const lastName = document.getElementById("signUpLastName").value.trim();
     const email = document.getElementById("signUpEmail").value.trim();
     const pass = document.getElementById("signUpPassword").value;
 
-    if (!firstName || !lastName || !email || !pass) return;
+    if (!firstName || !lastName || !email || !pass) {
+        alert("All fields are required");
+        return;
+    }
+
+    if (pass.length < 6) {
+        alert("Password must be at least 6 characters");
+        return;
+    }
 
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
@@ -107,11 +133,21 @@ document.getElementById("dropdownSignUpBtn").addEventListener("click", async fun
         });
 
         document.getElementById("profileDropdown").classList.remove("open");
+
     } catch (err) {
-        alert(err.message);
+        if (err.code === "auth/email-already-in-use") {
+            alert("Email already registered");
+        } else if (err.code === "auth/invalid-email") {
+            alert("Invalid email address");
+        } else if (err.code === "auth/weak-password") {
+            alert("Password must be at least 6 characters");
+        } else {
+            alert(err.message);
+        }
     }
 });
 
+// Toggle between sign in and sign up forms
 document.getElementById("showSignUp").addEventListener("click", function() {
     document.getElementById("signInForm").style.display = "none";
     document.getElementById("signUpForm").style.display = "flex";
@@ -122,10 +158,13 @@ document.getElementById("showSignIn").addEventListener("click", function() {
     document.getElementById("signInForm").style.display = "flex";
 });
 
+// Sign out
 document.querySelector(".signout").addEventListener("click", async function() {
     await signOut(auth);
+    document.getElementById("profileDropdown").classList.remove("open");
 });
 
+// Forgot password
 document.getElementById("forgotPassword")?.addEventListener("click", async function() {
     const email = document.getElementById("dropdownEmail").value.trim();
     if (!email) {
@@ -136,6 +175,10 @@ document.getElementById("forgotPassword")?.addEventListener("click", async funct
         await sendPasswordResetEmail(auth, email);
         alert("Password reset email sent — check your inbox");
     } catch (err) {
-        alert(err.message);
+        if (err.code === "auth/user-not-found") {
+            alert("No account found with that email");
+        } else {
+            alert(err.message);
+        }
     }
 });
