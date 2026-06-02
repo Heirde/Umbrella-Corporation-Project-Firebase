@@ -126,7 +126,7 @@ nav{
 }
 
 .hero-sub {
-    font-size: 15px;
+    font-size: 18px;
     color: rgba(255, 255, 255, 0.7);
     line-height: 1.7;
     margin-bottom: 28px;
@@ -402,7 +402,7 @@ nav{
 }
 
 .divisions-sub {
-    font-size: 14px;
+    font-size: 16px;
     color: #888;
     max-width: 500px;
     margin: 0 auto;
@@ -448,7 +448,7 @@ nav{
 }
 
 .div-card-text {
-    font-size: 13px;
+    font-size: 15px;
     color: #333;
     line-height: 1.7;
 }
@@ -543,7 +543,7 @@ nav{
 }
 
 .mission-sub{
-    font-size: 14px;
+    font-size: 16px;
     color: #888;
     line-height: 1.8;
 }
@@ -576,7 +576,7 @@ nav{
 }
 
 .news-sub{
-    font-size: 1px;
+    font-size: 16px;
     color: #888;
     line-height: 1.6;
 }
@@ -628,7 +628,7 @@ nav{
 }
 
 .news-card-text{
-    font-size: 13px;
+    font-size: 15px;
     color: #666;
     line-height: 1.7;
     flex: 1;
@@ -774,7 +774,7 @@ footer{
 }
 
 .footer-sub{
-    font-size: 11px;
+    font-size: 13px;
     color: #444;
 }
 
@@ -806,7 +806,7 @@ footer{
 }
 
 .admin-sub {
-    font-size: 14px;
+    font-size: 16px;
     color: #888;
 }
 
@@ -994,7 +994,7 @@ footer{
 }
 
 .rd-hero-sub {
-    font-size: 15px;
+    font-size: 18px;
     color: rgba(255, 255, 255, 0.6);
     line-height: 1.7;
 }
@@ -1105,6 +1105,6 @@ footer{
 }
 
 .rd-division-sublabel {
-    font-size: 12px;
+    font-size: 14px;
     color: #999;
 }
