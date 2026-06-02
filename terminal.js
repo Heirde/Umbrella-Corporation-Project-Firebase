@@ -1,7 +1,10 @@
+import { db } from "./firebase.js";
+import { collection, query, where, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
 document.addEventListener('DOMContentLoaded', function() {
     const input = document.getElementById('input');
     const output = document.getElementById('output');
-    const API_BASE_URL = "https://umbrella-corporation-project-production.up.railway.app";
+    const purchasesCollection = collection(db, "purchases");
     let isRunning = false; // Flag to block inputs
 
     async function performPurchase(bowId, bowLabel, price) {
@@ -13,21 +16,19 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         try {
-            const response = await fetch(`${API_BASE_URL}/api/purchase`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ firstName, lastName, bowId, bowLabel, price })
+            await addDoc(purchasesCollection, {
+                firstName,
+                lastName,
+                bowId,
+                bowLabel,
+                price,
+                purchasedAt: serverTimestamp()
             });
-
-            const data = await response.json();
-            if (!response.ok) {
-                return `Purchase failed: ${data.error || 'Unknown server error.'}`;
-            }
 
             return `Purchase successful. ${bowLabel} is now in your inventory. Handle with extreme caution and ensure secure containment at all times.`;
         } catch (err) {
-            console.error('Purchase request failed:', err);
-            return 'Purchase failed. Could not connect to the server.';
+            console.error('Purchase failed:', err);
+            return 'Purchase failed. Could not save purchase to Firebase.';
         }
     }
 
@@ -40,21 +41,25 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         try {
-            const response = await fetch(`${API_BASE_URL}/api/inventory?firstName=${encodeURIComponent(firstName)}&lastName=${encodeURIComponent(lastName)}`);
-            const data = await response.json();
+            const q = query(
+                purchasesCollection,
+                where('firstName', '==', firstName),
+                where('lastName', '==', lastName)
+            );
+            const querySnapshot = await getDocs(q);
 
-            if (!response.ok) {
-                return [`Inventory request failed: ${data.error || 'Unknown server error.'}`];
-            }
-
-            if (!data.ownedBOWs || data.ownedBOWs.length === 0) {
+            if (querySnapshot.empty) {
                 return ["Inventory empty. No owned B.O.W. units found."];
             }
 
-            return data.ownedBOWs.map(item => `${item.label} (${item.sku}) - purchased ${new Date(item.purchasedAt).toLocaleString()}`);
+            return querySnapshot.docs.map(doc => {
+                const item = doc.data();
+                const purchasedAt = item.purchasedAt && item.purchasedAt.toDate ? item.purchasedAt.toDate().toLocaleString() : 'unknown time';
+                return `${item.bowLabel} (${item.bowId}) - purchased ${purchasedAt}`;
+            });
         } catch (err) {
             console.error('Inventory request failed:', err);
-            return ['Inventory request failed. Could not connect to the server.'];
+            return ['Inventory request failed. Could not read inventory from Firebase.'];
         }
     }
 
@@ -73,9 +78,9 @@ document.addEventListener('DOMContentLoaded', function() {
         input.disabled = true; // Block input
         input.placeholder = 'Command running...';
 
-        
         let results = [];
 
+        try {
 // =========================commands=========================
         switch (cmd) {
         case "help":
@@ -603,7 +608,7 @@ document.addEventListener('DOMContentLoaded', function() {
         input.placeholder = '';
         input.value = '';
 
-        for (i = 0; i < results.length; i++) {
+        for (let i = 0; i < results.length; i++) {
             if (typeof results[i] === 'number') {
                 await new Promise(resolve => setTimeout(resolve, results[i]));
             } else {
@@ -613,11 +618,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         output.scrollTop = output.scrollHeight;
-        
+    } catch (err) {
+        console.error('Terminal command failed:', err);
+        output.innerHTML += `<div>Command failed: ${err.message || err}</div>`;
+    } finally {
         // Re-enable input
         isRunning = false;
         input.disabled = false;
+        input.placeholder = '';
         input.focus();
+    }
     }
     
     input.focus();
